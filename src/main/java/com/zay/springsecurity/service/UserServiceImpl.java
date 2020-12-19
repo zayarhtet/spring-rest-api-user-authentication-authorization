@@ -85,7 +85,8 @@ public class UserServiceImpl implements UserService{
     //register user and save into database
     @Override
     public ResponseEntity<?> registerUser(RegisterRequest registerRequest) throws ResourceNotFoundException {
-        //transform registerRequest model to user model
+        //transform registerRequest model
+        // to user model
         if (userRepository.existsByUsername(registerRequest.getUsername())) {
             return ResponseEntity.badRequest().body(("Error: Username is already taken!"));
         } else {
