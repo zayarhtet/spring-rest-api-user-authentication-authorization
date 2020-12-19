@@ -1,6 +1,7 @@
 package com.zay.springsecurity.service;
 
 
+import com.zay.springsecurity.exception.ResourceNotFoundException;
 import com.zay.springsecurity.model.User;
 import com.zay.springsecurity.payload.request.LoginRequest;
 import com.zay.springsecurity.payload.request.RegisterRequest;
@@ -15,7 +16,7 @@ public interface UserService {
 
     List<User> getAllUsers();
 
-    ResponseEntity<?> registerUser(RegisterRequest registerRequest);
+    ResponseEntity<?> registerUser(RegisterRequest registerRequest) throws ResourceNotFoundException;
 
     void createVerificationToken(User user, String token);
 

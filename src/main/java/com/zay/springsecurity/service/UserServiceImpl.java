@@ -1,5 +1,6 @@
 package com.zay.springsecurity.service;
 
+import com.zay.springsecurity.exception.ResourceNotFoundException;
 import com.zay.springsecurity.jwt.JwtTokenUtil;
 import com.zay.springsecurity.model.Role;
 import com.zay.springsecurity.model.User;
@@ -83,27 +84,28 @@ public class UserServiceImpl implements UserService{
 
     //register user and save into database
     @Override
-    public ResponseEntity<?> registerUser(RegisterRequest registerRequest) {
+    public ResponseEntity<?> registerUser(RegisterRequest registerRequest) throws ResourceNotFoundException {
         //transform registerRequest model to user model
-        User user = new User();
-        user.setFirstName(registerRequest.getFirstName());
-        user.setLastName(registerRequest.getLastName());
-        user.setEmail(registerRequest.getEmail());
-        user.setUsername(registerRequest.getUsername());
-        user.setPassword(encoder.encode(registerRequest.getPassword()));
-        user.setVerified(false);
-        Set<Role> roles = new HashSet<>();
-        Role role = roleRepository.findByName("ROLE_USER");
-        roles.add(role);
-        user.setRoles(roles);
+        if (userRepository.existsByUsername(registerRequest.getUsername())) {
+            return ResponseEntity.badRequest().body(("Error: Username is already taken!"));
+        } else {
+            User user = new User();
+            user.setFirstName(registerRequest.getFirstName());
+            user.setLastName(registerRequest.getLastName());
+            user.setEmail(registerRequest.getEmail());
+            user.setUsername(registerRequest.getUsername());
+            user.setPassword(encoder.encode(registerRequest.getPassword()));
+            user.setVerified(false);
+            Set<Role> roles = new HashSet<>();
+            user.setRoles(roles);
 
-        //save in the database
-        userRepository.save(user);
-        //send email verification
-        eventPublisher.publishEvent(new OnCreateAccountEvent(user,"zay"));
-
-        return ResponseEntity.ok("Your account has been registered with the username "+user.getUsername()+
-                "\n The verification email has been sent to "+user.getEmail());
+            //save in the database
+            userRepository.save(user);
+            //send email verification
+            eventPublisher.publishEvent(new OnCreateAccountEvent(user, "zay"));
+            return ResponseEntity.ok("Your account has been registered with the username " + user.getUsername() +
+                    "\n The verification email has been sent to " + user.getEmail());
+        }
     }
 
     @Override
@@ -121,11 +123,11 @@ public class UserServiceImpl implements UserService{
 
             newUser.setVerified(true);
             Set<Role> roles = newUser.getRoles();
-            Role role = roleRepository.findByName("ROLE_ADMIN");
+            Role role = roleRepository.findByName("ROLE_USER");
             roles.add(role);
             newUser.setRoles(roles);
             BeanUtils.copyProperties(newUser, oldUser);
-            userRepository.save(oldUser);
+            userRepository.save(newUser);
 
             //delete from token
             verificationTokenRepository.delete(verificationToken);
